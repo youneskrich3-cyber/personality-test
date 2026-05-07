@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Personality Systems</title>
+    <style>
+        :root { --primary: #2c3e50; --secondary: #34495e; --accent: #3498db; --bg: #f4f7f6; --text: #333; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); color: var(--text); line-height: 1.6; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: var(--primary); }
+        .intro { text-align: center; margin-bottom: 30px; color: #666; }
+        .question-block { margin-bottom: 25px; padding: 20px; border-bottom: 1px solid #eee; }
+        .question-text { font-weight: 600; margin-bottom: 15px; display: block; }
+        .options { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+        .option { flex: 1; min-width: 100px; }
+        input[type="radio"] { display: none; }
+        label { display: block; background: #f8f9fa; padding: 10px; text-align: center; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; transition: 0.3s; font-size: 14px; }
+        input[type="radio"]:checked + label { background: var(--accent); color: white; border-color: var(--accent); }
+        #btn-submit { display: block; width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 6px; font-size: 18px; cursor: pointer; margin-top: 30px; }
+        #btn-submit:hover { background: var(--secondary); }
+        #result-area { display: none; margin-top: 30px; padding: 30px; border-radius: 12px; background: #e8f4fd; }
+        .archetype-title { color: var(--accent); font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+        .analysis-section { margin-top: 20px; }
+        .analysis-section h3 { margin-bottom: 5px; color: var(--primary); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Core Personality Assessment</h1>
+    <p class="intro">Identify your dominant psychological traits and cognitive patterns.</p>
+    
+    <form id="quiz-form">
+        <div id="questions-container"></div>
+        <button type="button" id="btn-submit" onclick="calculateResult()">Analyze Personality</button>
+    </form>
+
+    <div id="result-area">
+        <div class="archetype-title" id="res-name"></div>
+        <div id="res-summary"></div>
+        <div class="analysis-section">
+            <h3>The Drive (Motivation)</h3>
+            <p id="res-drive"></p>
+        </div>
+        <div class="analysis-section">
+            <h3>The Shadow (Stress Response)</h3>
+            <p id="res-shadow"></p>
+        </div>
+        <button onclick="window.location.reload()" style="margin-top:20px; padding:10px; cursor:pointer;">Retake Test</button>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        { id: 1, text: "I enjoy spending time with large groups of people.", cat: "social", rev: false },
+        { id: 2, text: "I feel comfortable starting conversations with strangers.", cat: "social", rev: false },
+        { id: 3, text: "I prefer quiet places over crowded environments.", cat: "social", rev: true },
+        { id: 4, text: "I enjoy being the center of attention.", cat: "social", rev: false },
+        { id: 5, text: "I stay calm during stressful situations.", cat: "think", rev: false },
+        { id: 6, text: "I enjoy solving complex problems.", cat: "think", rev: false },
+        { id: 7, text: "I prefer logic over feelings when making decisions.", cat: "think", rev: false },
+        { id: 8, text: "I often overthink situations.", cat: "think", rev: true },
+        { id: 9, text: "I frequently imagine new ideas or possibilities.", cat: "creative", rev: false },
+        { id: 10, text: "I enjoy artistic or creative activities.", cat: "creative", rev: false },
+        { id: 11, text: "I adapt easily to unexpected changes.", cat: "creative", rev: false },
+        { id: 12, text: "I enjoy taking risks and trying new experiences.", cat: "creative", rev: false }
+    ];
+
+    const container = document.getElementById('questions-container');
+    questions.forEach(q => {
+        const html = `
+            <div class="question-block">
+                <span class="question-text">${q.id}. ${q.text}</span>
+                <div class="options">
+                    <input type="radio" name="q${q.id}" value="5" id="q${q.id}a" required><label for="q${q.id}a">Strongly Agree</label>
+                    <input type="radio" name="q${q.id}" value="4" id="q${q.id}b"><label for="q${q.id}b">Agree</label>
+                    <input type="radio" name="q${q.id}" value="3" id="q${q.id}c"><label for="q${q.id}c">Neutral</label>
+                    <input type="radio" name="q${q.id}" value="2" id="q${q.id}d"><label for="q${q.id}d">Disagree</label>
+                    <input type="radio" name="q${q.id}" value="1" id="q${q.id}e"><label for="q${q.id}e">Strongly Disagree</label>
+                </div>
+            </div>`;
+        container.innerHTML += html;
+    });
+
+    function calculateResult() {
+        let scores = { social: 0, think: 0, creative: 0 };
+        let answeredAll = true;
+
+        questions.forEach(q => {
+            const val = document.querySelector(`input[name="q${q.id}"]:checked`);
+            if (val) {
+                let points = parseInt(val.value);
+                if (q.rev) points = 6 - points; // Reverse logic
+                scores[q.cat] += points;
+            } else {
+                answeredAll = false;
+            }
+        });
+
+        if (!answeredAll) {
+            alert("Please answer all questions first.");
+            return;
+        }
+
+        let winner = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
+        displayResult(winner);
+    }
+
+    function displayResult(type) {
+        const results = {
+            social: {
+                name: "The Leader",
+                summary: "You are energetic, outgoing, and thrive in social ecosystems.",
+                drive: "Agency. You are motivated by influencing others and seeing group progress.",
+                shadow: "Impatience. Under stress, you may become controlling or steamroll others' opinions."
+            },
+            think: {
+                name: "The Thinker",
+                summary: "You are analytical, calm, and focus on understanding underlying systems.",
+                drive: "Competence. You are motivated by mastery of skills and logical consistency.",
+                shadow: "Analysis Paralysis. Under stress, you may overthink to the point of inaction."
+            },
+            creative: {
+                name: "The Creative",
+                summary: "You are imaginative and highly adaptable to new environments.",
+                drive: "Novelty. You are motivated by the discovery of new ideas and artistic expression.",
+                shadow: "Scattered Energy. Under stress, you may struggle to finish what you start."
+            }
+        };
+
+        const data = results[type];
+        document.getElementById('quiz-form').style.display = 'none';
+        document.getElementById('result-area').style.display = 'block';
+        document.getElementById('res-name').innerText = data.name;
+        document.getElementById('res-summary').innerText = data.summary;
+        document.getElementById('res-drive').innerText = data.drive;
+        document.getElementById('res-shadow').innerText = data.shadow;
+    }
+</script>
+</body>
+</html>
